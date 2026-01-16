@@ -4,10 +4,8 @@ import curses
 import atexit
 
 
-# initialize window
-stdscr = curses.initscr()
-
 # set up terminal
+stdscr = curses.initscr()
 curses.noecho()
 curses.cbreak()
 stdscr.keypad(True)
@@ -24,19 +22,16 @@ atexit.register(lambda: (
     curses.endwin()
 ))
 
-# set up bounds
-max_y, max_x = stdscr.getmaxyx()
-max_y = max_y - 2
-max_x = max_x - 2
-
-# add border
 stdscr.border()
-stdscr.move(1, 1)
+
+# initialize bounds and position
+max_y, max_x = (p - 2 for p in stdscr.getmaxyx())
+min_x, min_y = 1, 1
+x, y = min_x, min_y
+stdscr.move(y, x)
 
 # draw loop
 while True:
-    y, x = stdscr.getyx()
-
     stdscr.addstr("█")
 
     stdscr.move(y, x)
@@ -45,10 +40,10 @@ while True:
 
     match key:
         case "w":
-            stdscr.move(max(y - 1, 1), x)
+            y = max(y - 1, 1)
         case "a":
-            stdscr.move(y, max(x - 1, 1))
+            x = max(x - 1, 1)
         case "s":
-            stdscr.move(min(y + 1, max_y), x)
+            y = min(y + 1, max_y)
         case "d":
-            stdscr.move(y, min(x + 1, max_x))
+            x = min(x + 1, max_x)
