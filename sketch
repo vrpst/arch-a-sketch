@@ -86,8 +86,8 @@ class Renderer(AbstractContextManager):
 
     def clear(self):
         for p in range(1, 11):
-            for i in range(len(self.canvas) - 1):
-                for j in range(len(self.canvas[0]) - 1):
+            for i in range(len(self.canvas)):
+                for j in range(len(self.canvas[0])):
                     if self.canvas[i][j] == True and \
                             random.randrange(11) < p:
                         self.canvas[i][j] = False
