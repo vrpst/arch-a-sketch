@@ -1,53 +1,62 @@
 #!/usr/bin/env python
 
 import curses
-import atexit
+from typing import Self
+from contextlib import AbstractContextManager
 
 
-# set up terminal
-stdscr = curses.initscr()
-curses.noecho()
-curses.cbreak()
-stdscr.keypad(True)
-try:
-    curses.curs_set(0)
-    curses.start_color()
-except:
-    pass
+class Renderer(AbstractContextManager):
+    def __enter__(self):
+        # set up terminal
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        self.stdscr.keypad(True)
+        try:
+            curses.curs_set(0)
+            curses.start_color()
+        except:
+            pass
 
-# reset terminal up on exit
-atexit.register(lambda: (
-    curses.echo(),
-    curses.nocbreak(),
-    stdscr.keypad(False),
-    curses.endwin()
-))
+        # initialize bounds
+        self.max_y, self.max_x = (p - 1 for p in self.stdscr.getmaxyx())
+        self.min_x, self.min_y = 0, 0
 
-# stdscr.border()
+        self.x, self.y = self.min_x, self.min_y
+        self.stdscr.move(self.y, self.x)
 
-# initialize bounds and position
-max_y, max_x = (p - 1 for p in stdscr.getmaxyx())
-min_x, min_y = 0, 0
-x, y = min_x, min_y
-stdscr.move(y, x)
+        return self
 
-# draw loop
-while True:
-    try:
-        stdscr.addstr(y, x, "█")
-    except:
-        pass
+    def __exit__(self, *_):
+        # reset terminal on exit
+        curses.echo()
+        curses.nocbreak()
+        self.stdscr.keypad(False)
+        curses.endwin()
 
-    stdscr.move(y, x)
+    def read_input(self):
+        key = self.stdscr.getkey()
 
-    key = stdscr.getkey()
+        match key:
+            case "w":
+                self.y = max(self.y - 1, self.min_y)
+            case "a":
+                self.x = max(self.x - 1, self.min_x)
+            case "s":
+                self.y = min(self.y + 1, self.max_y)
+            case "d":
+                self.x = min(self.x + 1, self.max_x)
 
-    match key:
-        case "w":
-            y = max(y - 1, 1)
-        case "a":
-            x = max(x - 1, 1)
-        case "s":
-            y = min(y + 1, max_y)
-        case "d":
-            x = min(x + 1, max_x)
+    def render(self):
+        try:
+            self.stdscr.addstr(self.y, self.x, "█")
+        except:
+            pass
+
+        self.stdscr.move(self.y, self.x)
+
+
+with Renderer() as renderer:
+    while True:
+        renderer.render()
+        renderer.read_input()
