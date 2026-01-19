@@ -2,15 +2,20 @@
 
 import curses
 from contextlib import AbstractContextManager
+import random
+import time
 
 
 class Renderer(AbstractContextManager):
+    """Context manager for drawing to the terminal"""
+
     table = [
         " ", "🮢", "🮣", "─",
         "🮡", "🮨", "│", "🮠",
         "🮠", "│", "🮩", "🮡",
         "─", "🮣", "🮢", " "
     ]
+    """Look up table for marching squares"""
 
     def __enter__(self):
         # set up terminal
@@ -25,7 +30,7 @@ class Renderer(AbstractContextManager):
 
         # initialize canvas and position
         max_y, max_x = self.stdscr.getmaxyx()
-        self.canvas = [[False] * max_y for _ in range(max_x)]
+        self.canvas = [[False for _ in range(max_y)] for _ in range(max_x)]
         self.x, self.y = 0, 0
 
         return self
@@ -38,6 +43,8 @@ class Renderer(AbstractContextManager):
         curses.endwin()
 
     def read_input(self):
+        """Wait for input and update canvas accordingly"""
+
         key = self.stdscr.getkey()
 
         match key:
@@ -49,11 +56,14 @@ class Renderer(AbstractContextManager):
                 self.y = min(self.y + 1, len(self.canvas[0]) - 1)
             case "d":
                 self.x = min(self.x + 1, len(self.canvas) - 1)
+            case " ":
+                self.clear()
 
         self.canvas[self.x][self.y] = True
 
-    def render(self):
-        """render canvas using marching squares"""
+    def render(self, refresh: bool = False):
+        """Render canvas using marching squares"""
+
         for i in range(len(self.canvas) - 1):
             for j in range(len(self.canvas[0]) - 1):
                 x = 0
@@ -71,11 +81,22 @@ class Renderer(AbstractContextManager):
                 except:
                     pass
 
+        if refresh:
+            self.stdscr.refresh()
+
+    def clear(self):
+        for p in range(1, 11):
+            for i in range(len(self.canvas) - 1):
+                for j in range(len(self.canvas[0]) - 1):
+                    if self.canvas[i][j] == True and \
+                            random.randrange(11) < p:
+                        self.canvas[i][j] = False
+
+            self.render(True)
+            time.sleep(0.1)
+
 
 with Renderer() as renderer:
-    # raise RuntimeError(
-    #     f"max width: {len(renderer.canvas)}, max height: {len(renderer.canvas[0])}, max yx: {renderer.stdscr.getmaxyx()}")
-
     while True:
         renderer.render()
         renderer.read_input()
