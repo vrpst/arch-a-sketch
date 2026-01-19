@@ -10,6 +10,7 @@ curses.noecho()
 curses.cbreak()
 stdscr.keypad(True)
 try:
+    curses.curs_set(0)
     curses.start_color()
 except:
     pass
@@ -22,17 +23,20 @@ atexit.register(lambda: (
     curses.endwin()
 ))
 
-stdscr.border()
+# stdscr.border()
 
 # initialize bounds and position
-max_y, max_x = (p - 2 for p in stdscr.getmaxyx())
-min_x, min_y = 1, 1
+max_y, max_x = (p - 1 for p in stdscr.getmaxyx())
+min_x, min_y = 0, 0
 x, y = min_x, min_y
 stdscr.move(y, x)
 
 # draw loop
 while True:
-    stdscr.addstr("█")
+    try:
+        stdscr.addstr(y, x, "█")
+    except:
+        pass
 
     stdscr.move(y, x)
 
